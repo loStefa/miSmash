@@ -1,0 +1,2028 @@
+<template>
+  <!-- Larghezza di progetto sempre 212px (designWidth); l'altezza dipende dallo schermo
+       e arriva da device.getInfo in pageH. Stili base = bracciale (pill-shaped),
+       in fondo le varianti per schermi rettangolari e rotondi. -->
+  <div class="page" style="height: {{ pageH }}px">
+    <!-- Home e scelte prima della partita: una domanda per schermata, due schede da toccare.
+         Si torna indietro col gesto di sistema (onBackPress). -->
+    <div class="screen screen-center" style="height: {{ pageH }}px" if="{{ view === 'home' }}">
+      <text class="step-title step-title-app">miSmash</text>
+      <div class="choices">
+        <div class="choice" onclick="toSport">
+          <image class="choice-img" src="/common/court.png"></image>
+          <text class="choice-label">{{ L.match }}</text>
+        </div>
+        <div class="choice choice-gap" onclick="openHistory">
+          <image class="choice-img" src="/common/trophy.png"></image>
+          <text class="choice-label">{{ L.history }}</text>
+        </div>
+      </div>
+      <text class="version">{{ version }}</text>
+    </div>
+
+    <div class="screen screen-center" style="height: {{ pageH }}px" if="{{ view === 'sport' }}">
+      <text class="step-title">{{ L.qSport }}</text>
+      <div class="steps">
+        <div class="step step-on"></div>
+        <div class="step"></div>
+        <div class="step"></div>
+        <div class="step"></div>
+      </div>
+      <div class="choices">
+        <div class="choice" onclick="pickPadel">
+          <image class="choice-img" src="/common/padel.png"></image>
+          <text class="choice-label">{{ L.padel }}</text>
+        </div>
+        <div class="choice choice-gap" onclick="pickTennis">
+          <image class="choice-img" src="/common/tennis.png"></image>
+          <text class="choice-label">{{ L.tennis }}</text>
+        </div>
+      </div>
+    </div>
+
+    <div class="screen screen-center" style="height: {{ pageH }}px" if="{{ view === 'sets' }}">
+      <text class="step-title">{{ L.qSets }}</text>
+      <div class="steps">
+        <div class="step"></div>
+        <div class="step step-on"></div>
+        <div class="step"></div>
+        <div class="step"></div>
+      </div>
+      <div class="choices">
+        <div class="choice" onclick="pickSets3">
+          <text class="choice-num">3</text>
+          <text class="choice-sub">{{ bestOf3 }}</text>
+        </div>
+        <div class="choice choice-gap" onclick="pickSets5">
+          <text class="choice-num">5</text>
+          <text class="choice-sub">{{ bestOf5 }}</text>
+        </div>
+      </div>
+    </div>
+
+    <div class="screen screen-center" style="height: {{ pageH }}px" if="{{ view === 'serve' }}">
+      <text class="step-title">{{ L.qServe }}</text>
+      <div class="steps">
+        <div class="step"></div>
+        <div class="step"></div>
+        <div class="step step-on"></div>
+        <div class="step"></div>
+      </div>
+      <div class="choices">
+        <div class="choice choice-noi" onclick="pickNoi">
+          <image class="choice-img" src="/common/team.png"></image>
+          <text class="choice-label">{{ L.us }}</text>
+        </div>
+        <div class="choice choice-loro choice-gap" onclick="pickLoro">
+          <image class="choice-img" src="/common/team.png"></image>
+          <text class="choice-label">{{ L.them }}</text>
+        </div>
+      </div>
+    </div>
+
+    <div class="screen screen-center" style="height: {{ pageH }}px" if="{{ view === 'golden' }}">
+      <text class="step-title">{{ goldenTitle }}</text>
+      <div class="steps">
+        <div class="step"></div>
+        <div class="step"></div>
+        <div class="step"></div>
+        <div class="step step-on"></div>
+      </div>
+      <div class="choices">
+        <div class="choice" onclick="goldenOn">
+          <image class="choice-img" src="/common/golden.png"></image>
+          <text class="choice-label">{{ L.yes }}</text>
+          <text class="choice-sub">{{ L.goldenYes }}</text>
+        </div>
+        <div class="choice choice-gap" onclick="goldenOff">
+          <image class="choice-img" src="/common/ball-grey.png"></image>
+          <text class="choice-label">{{ L.no }}</text>
+          <text class="choice-sub">{{ L.goldenNo }}</text>
+        </div>
+      </div>
+    </div>
+
+    <!-- Partita: un pannello per squadra, tocco = punto, pressione lunga = annulla -->
+    <div class="screen" style="height: {{ pageH }}px" if="{{ view === 'match' }}">
+      <text class="sets">{{ setsText }}</text>
+      <text class="{{ topCls }}">{{ topText }}</text>
+      <div class="games-row">
+        <text class="games text-noi">{{ gamesNoi }}</text>
+        <text class="games-sep">-</text>
+        <text class="games text-loro">{{ gamesLoro }}</text>
+      </div>
+      <text class="status">{{ statusText }}</text>
+      <div class="panels">
+        <div class="{{ panelNoiCls }}" ontouchstart="touchStart" onclick="tapNoi" onlongpress="holdNoi">
+          <div class="panel-head">
+            <div class="dot" style="background-color: {{ dotNoi }}"></div>
+            <text class="team team-long text-noi">{{ L.us }}</text>
+            <text class="team team-short text-noi">{{ L.usShort }}</text>
+            <text class="side">{{ sideNoi }}</text>
+          </div>
+          <text class="{{ ptsNoiCls }}">{{ ptsNoi }}</text>
+        </div>
+        <div class="{{ panelLoroCls }}" ontouchstart="touchStart" onclick="tapLoro" onlongpress="holdLoro">
+          <div class="panel-head">
+            <div class="dot" style="background-color: {{ dotLoro }}"></div>
+            <text class="team team-long text-loro">{{ L.them }}</text>
+            <text class="team team-short text-loro">{{ L.themShort }}</text>
+            <text class="side">{{ sideLoro }}</text>
+          </div>
+          <text class="{{ ptsLoroCls }}">{{ ptsLoro }}</text>
+        </div>
+      </div>
+      <div class="bar">
+        <div class="btn-end" onclick="askEnd">
+          <text class="btn-end-text">{{ L.end }}</text>
+        </div>
+      </div>
+    </div>
+
+    <!-- GAME / SET / fine partita a tutto schermo, si chiude da solo o con un tocco -->
+    <!-- Sul bracciale lo sfondo colorato restava nero sia da classe dinamica sia in linea: funziona
+         con la classe scritta qui e la misura fissa. Il testo è bianco, così si legge comunque. -->
+    <div class="flash-screen" style="height: {{ pageH }}px" if="{{ view === 'flash' }}" onclick="closeFlash">
+      <div class="flash-card flash-card-noi" style="height: {{ cardH }}px" if="{{ flashTeam === 0 }}">
+        <text class="{{ flashTitleCls }}">{{ flashTitle }}</text>
+        <text class="flash-sub">{{ flashSub }}</text>
+      </div>
+      <div class="flash-card flash-card-loro" style="height: {{ cardH }}px" if="{{ flashTeam === 1 }}">
+        <text class="{{ flashTitleCls }}">{{ flashTitle }}</text>
+        <text class="flash-sub">{{ flashSub }}</text>
+      </div>
+    </div>
+
+    <!-- Conferma prima di chiudere la partita in corso -->
+    <div class="screen screen-center" style="height: {{ pageH }}px" if="{{ view === 'confirm' }}">
+      <text class="confirm-title">{{ confirmTitle }}</text>
+      <text class="confirm-sub">{{ confirmSub }}</text>
+      <div class="confirm-btns">
+        <div class="{{ confirmYesCls }}" onclick="confirmEnd">
+          <text class="btn-text btn-text-light">{{ L.yes }}</text>
+        </div>
+        <div class="btn btn-confirm btn-grey btn-no" onclick="cancelEnd">
+          <text class="btn-text btn-text-light">{{ L.no }}</text>
+        </div>
+      </div>
+    </div>
+
+    <!-- Storico: dalla partita più recente -->
+    <scroll class="scroller" style="height: {{ pageH }}px" scroll-y="true" if="{{ view === 'history' }}">
+      <div class="col slide-in">
+        <text class="title">{{ L.history }}</text>
+        <text class="empty" if="{{ historyEmpty }}">{{ L.historyEmpty }}</text>
+        <div class="h-item" for="{{ historyItems }}" onclick="openDetail($idx)">
+          <div class="h-line">
+            <text class="h-sport">{{ $item.sport }}</text>
+            <text class="h-date">{{ $item.date }}</text>
+          </div>
+          <text class="h-score">{{ $item.score }}</text>
+          <div class="h-line">
+            <text class="{{ $item.resCls }}">{{ $item.res }}</text>
+            <text class="h-dur">{{ $item.dur }}</text>
+          </div>
+        </div>
+        <div class="btn-sec" onclick="toHome">
+          <text class="btn-sec-text">{{ L.back }}</text>
+        </div>
+      </div>
+    </scroll>
+
+    <!-- Riepilogo di una partita: alla fine della partita o dallo storico -->
+    <scroll class="scroller" style="height: {{ pageH }}px" scroll-y="true" if="{{ view === 'detail' }}">
+      <div class="col slide-in">
+        <text class="d-head">{{ detailHead }}</text>
+        <text class="{{ detailResCls }}">{{ detailRes }}</text>
+        <div class="d-row">
+          <text class="d-label"></text>
+          <text class="d-team text-noi">{{ L.usShort }}</text>
+          <text class="d-sep"></text>
+          <text class="d-team text-loro">{{ L.themShort }}</text>
+        </div>
+        <div class="d-row" for="{{ detailSets }}">
+          <text class="d-label">{{ $item.label }}</text>
+          <text class="d-num text-noi">{{ $item.a }}</text>
+          <text class="d-sep">-</text>
+          <text class="d-num text-loro">{{ $item.b }}</text>
+        </div>
+        <div class="card">
+          <div class="stat">
+            <text class="stat-label">{{ L.duration }}</text>
+            <text class="stat-value">{{ detailDur }}</text>
+          </div>
+          <div class="stat" for="{{ detailStats }}">
+            <text class="stat-label">{{ $item.label }}</text>
+            <text class="stat-num text-noi">{{ $item.a }}</text>
+            <text class="stat-num text-loro">{{ $item.b }}</text>
+          </div>
+        </div>
+        <div class="btn btn-ok" onclick="closeDetail">
+          <text class="btn-text">OK</text>
+        </div>
+        <div class="btn-sec" onclick="deleteDetail">
+          <text class="{{ deleteTextCls }}">{{ deleteLabel }}</text>
+        </div>
+      </div>
+    </scroll>
+  </div>
+</template>
+
+<script>
+  import storage from '@system.storage';
+  import vibrator from '@system.vibrator';
+  import brightness from '@system.brightness';
+  import device from '@system.device';
+  import app from '@system.app';
+  import {
+    NOI,
+    LORO,
+    PADEL,
+    TENNIS,
+    newMatch,
+    addPoint,
+    undoPoint,
+    compute,
+    scoreSets,
+    sanitize,
+    addToHistory,
+    sanitizeHistory
+  } from '../../common/score';
+  import { formatDate, formatDuration, setsLine } from '../../common/format';
+  import { STRINGS, pickLang, fill } from '../../common/i18n';
+  import { FORCED_LANG } from '../../common/build';
+
+  const KEY = 'padel.state';
+  const HISTORY_KEY = 'padel.history';
+  const DESIGN_WIDTH = 212; // = config.designWidth nel manifest
+  const FLASH_MARGIN = 20; // = padding verticale di .flash-screen
+  const BALL = '#dfff4f'; // pallino battuta
+  const PANEL_NOI = '#0a2240'; // pallino "spento" = colore del pannello
+  const PANEL_LORO = '#3a2408';
+  const PANEL_CLS = ['panel panel-noi', 'panel panel-loro panel-gap'];
+  const GLOW_CLS = [' glow-noi', ' glow-loro'];
+
+  export default {
+    private: {
+      view: '', // '' finché non è letto lo storage: niente lampo della schermata sbagliata
+      pageH: 520, // altezza dello schermo in px di progetto: 520 sul Band 10, 212 sui rotondi
+      cardH: 480, // riquadro GAME/SET: pageH meno i margini di .flash-screen
+      version: '', // es. "v1.3.0": per capire al volo quale versione è installata
+      L: STRINGS[FORCED_LANG || 'en'], // testi nella lingua del dispositivo (vedi setLang)
+      bestOf3: '',
+      bestOf5: '',
+      goldenTitle: '',
+      setsText: '',
+      statusText: '',
+      topText: '',
+      topCls: 'top',
+      ptsNoi: '0',
+      ptsLoro: '0',
+      ptsNoiCls: 'points',
+      ptsLoroCls: 'points',
+      panelNoiCls: PANEL_CLS[NOI],
+      panelLoroCls: PANEL_CLS[LORO],
+      gamesNoi: '0',
+      gamesLoro: '0',
+      dotNoi: PANEL_NOI,
+      dotLoro: PANEL_LORO,
+      sideNoi: '',
+      sideLoro: '',
+      flashTeam: 0,
+      flashTitleCls: 'flash-title',
+      flashTitle: '',
+      flashSub: '',
+      confirmTitle: '',
+      confirmSub: '',
+      confirmYesCls: 'btn btn-confirm btn-ok',
+      historyItems: [],
+      historyEmpty: true,
+      detailHead: '',
+      detailRes: '',
+      detailResCls: 'res-big',
+      detailSets: [],
+      detailDur: '',
+      detailStats: [],
+      deleteLabel: '',
+      deleteTextCls: 'btn-sec-text'
+    },
+
+    // Stato interno non reattivo
+    match: null,
+    history: [],
+    historyLoaded: false,
+    lang: FORCED_LANG || 'en',
+    setupSport: PADEL,
+    setupBestOf: 3,
+    setupFirst: NOI,
+    setupGolden: false,
+    held: false,
+    heldAt: 0,
+    tapAt: 0,
+    touchSeen: false,
+    flashTimer: 0,
+    detailIdx: 0,
+    detailFrom: 'history',
+    deleteArmed: false,
+    flips: {},
+
+    onInit() {
+      try {
+        this.version = 'v' + app.getInfo().versionName;
+      } catch (e) {}
+      this.measure();
+      this.load();
+      this.withHistory(() => {});
+    },
+
+    onShow() {
+      this.applyScreen();
+    },
+
+    // Il bracciale può chiudere l'app in qualsiasi momento: si salva a ogni punto,
+    // qui solo come rete di sicurezza.
+    onHide() {
+      this.save();
+      this.keepScreen(false);
+    },
+
+    onDestroy() {
+      clearTimeout(this.flashTimer);
+      this.save();
+      this.keepScreen(false);
+    },
+
+    onBackPress() {
+      if (this.view === 'confirm' || this.view === 'flash') {
+        this.closeFlash();
+        this.view = 'match';
+        return true;
+      }
+      const back = { sport: 'home', sets: 'sport', serve: 'sets', golden: 'serve', history: 'home' }[this.view];
+      if (back) {
+        this.goTo(back);
+        return true;
+      }
+      if (this.view === 'detail') {
+        this.closeDetail();
+        return true;
+      }
+      return false;
+    },
+
+    /* ---------- schermo, salvataggio ---------- */
+
+    // Stessa larghezza di progetto su tutti i dispositivi: l'altezza visibile in px di
+    // progetto è altezza/larghezza dello schermo × 212.
+    measure() {
+      try {
+        device.getInfo({
+          success: (d) => {
+            if (d) this.setLang(d.language);
+            if (d && d.screenWidth > 0 && d.screenHeight > 0) {
+              this.pageH = Math.round((d.screenHeight * DESIGN_WIDTH) / d.screenWidth);
+              this.cardH = this.pageH - FLASH_MARGIN * 2;
+            }
+          }
+        });
+      } catch (e) {}
+    },
+
+    // Lingua del dispositivo, oppure quella fissa dei pacchetti dedicati (npm run build:it)
+    setLang(code) {
+      this.lang = FORCED_LANG || pickLang(code);
+      this.L = STRINGS[this.lang];
+      this.bestOf3 = fill(this.L.bestOf, { n: 3 });
+      this.bestOf5 = fill(this.L.bestOf, { n: 5 });
+      this.refresh();
+    },
+
+    load() {
+      try {
+        storage.get({
+          key: KEY,
+          success: (d) => this.applyState(this.parse(d)),
+          fail: () => this.applyState(null)
+        });
+      } catch (e) {
+        this.applyState(null);
+      }
+      setTimeout(() => {
+        if (!this.view) this.applyState(null);
+      }, 1500);
+    },
+
+    // Lo storico si legge una volta sola; cb parte quando è pronto.
+    withHistory(cb) {
+      if (this.historyLoaded) {
+        cb();
+        return;
+      }
+      let done = false;
+      const ready = (d) => {
+        if (done) return;
+        done = true;
+        if (!this.historyLoaded) {
+          this.history = sanitizeHistory(this.parse(d));
+          this.historyLoaded = true;
+        }
+        cb();
+      };
+      try {
+        storage.get({ key: HISTORY_KEY, success: ready, fail: () => ready(null) });
+      } catch (e) {
+        ready(null);
+      }
+      setTimeout(() => ready(null), 1500);
+    },
+
+    parse(d) {
+      if (!d) return null;
+      if (typeof d === 'string') {
+        try {
+          return JSON.parse(d);
+        } catch (e) {
+          return null;
+        }
+      }
+      if (typeof d === 'object' && d.value) return this.parse(d.value);
+      return typeof d === 'object' ? d : null;
+    },
+
+    applyState(st) {
+      st = st || {};
+      this.setupGolden = !!st.golden;
+      this.setupSport = st.sport === TENNIS ? TENNIS : PADEL;
+      this.match = sanitize(st.match);
+      if (this.match) {
+        this.setupFirst = this.match.first;
+        this.setupSport = this.match.sport;
+      }
+      this.view = this.match ? 'match' : 'home';
+      this.refresh();
+      this.applyScreen();
+    },
+
+    save() {
+      try {
+        storage.set({
+          key: KEY,
+          value: JSON.stringify({ sport: this.setupSport, golden: this.setupGolden, match: this.match })
+        });
+      } catch (e) {}
+    },
+
+    saveHistory() {
+      try {
+        storage.set({ key: HISTORY_KEY, value: JSON.stringify(this.history) });
+      } catch (e) {}
+    },
+
+    // Durante la partita lo schermo resta acceso, così non si torna al quadrante tra un punto e l'altro.
+    applyScreen() {
+      this.keepScreen(this.view === 'match' || this.view === 'confirm' || this.view === 'flash');
+    },
+
+    keepScreen(on) {
+      try {
+        brightness.setKeepScreenOn({ keepScreenOn: on, fail: () => {} });
+      } catch (e) {}
+    },
+
+    buzz(mode) {
+      try {
+        vibrator.vibrate({ mode: mode });
+      } catch (e) {}
+    },
+
+    /* ---------- vista ---------- */
+
+    refresh() {
+      this.refreshSetup();
+      return this.refreshMatch();
+    },
+
+    refreshSetup() {
+      this.goldenTitle = this.L.qGolden[this.setupSport];
+    },
+
+    refreshMatch() {
+      if (!this.match) return null;
+      const s = compute(this.match);
+      const history = setsLine(s.sets);
+
+      if (s.winner >= 0) {
+        // A partita finita: in alto tutti i set, nei pannelli i set vinti e sopra i game dell'ultimo set
+        const last = s.sets[s.sets.length - 1];
+        this.setsText = history;
+        this.statusText = s.winner === NOI ? this.L.weWin : this.L.theyWin;
+        this.ptsNoi = String(s.setsWon[0]);
+        this.ptsLoro = String(s.setsWon[1]);
+        this.gamesNoi = String(last[0]);
+        this.gamesLoro = String(last[1]);
+        this.dotNoi = PANEL_NOI;
+        this.dotLoro = PANEL_LORO;
+        this.sideNoi = '';
+        this.sideLoro = '';
+      } else {
+        this.setsText = (history ? history + '  ·  ' : '') + fill(this.L.nthSet, { n: s.sets.length + 1 });
+        this.statusText = s.tiebreak ? this.L.tiebreak : s.goldenPoint ? this.L.golden[this.match.sport] : '';
+        this.ptsNoi = s.labels[0];
+        this.ptsLoro = s.labels[1];
+        this.gamesNoi = String(s.games[0]);
+        this.gamesLoro = String(s.games[1]);
+        this.dotNoi = s.server === NOI ? BALL : PANEL_NOI;
+        this.dotLoro = s.server === LORO ? BALL : PANEL_LORO;
+        const side = s.side === 'R' ? this.L.right : s.side === 'L' ? this.L.left : '';
+        this.sideNoi = s.server === NOI ? side : '';
+        this.sideLoro = s.server === LORO ? side : '';
+      }
+      // Sugli schermi rotondi c'è posto per una riga sola in alto
+      this.topText = this.statusText || this.setsText;
+      this.topCls = this.statusText ? 'top top-status' : 'top';
+      return s;
+    },
+
+    /* ---------- home e scelte ---------- */
+
+    goTo(view) {
+      this.view = view;
+      this.refreshSetup();
+      this.applyScreen();
+    },
+
+    toHome() {
+      this.goTo('home');
+    },
+
+    toSport() {
+      this.goTo('sport');
+    },
+
+    pickPadel() {
+      this.setupSport = PADEL;
+      this.goTo('sets');
+    },
+
+    pickTennis() {
+      this.setupSport = TENNIS;
+      this.goTo('sets');
+    },
+
+    pickSets3() {
+      this.setupBestOf = 3;
+      this.goTo('serve');
+    },
+
+    pickSets5() {
+      this.setupBestOf = 5;
+      this.goTo('serve');
+    },
+
+    pickNoi() {
+      this.setupFirst = NOI;
+      this.goTo('golden');
+    },
+
+    pickLoro() {
+      this.setupFirst = LORO;
+      this.goTo('golden');
+    },
+
+    goldenOn() {
+      this.setupGolden = true;
+      this.startMatch();
+    },
+
+    goldenOff() {
+      this.setupGolden = false;
+      this.startMatch();
+    },
+
+    startMatch() {
+      this.match = newMatch(this.setupFirst, this.setupGolden, this.setupSport, Date.now(), this.setupBestOf);
+      this.resetAnim();
+      this.view = 'match';
+      this.refresh();
+      this.save();
+      this.applyScreen();
+      this.buzz('long');
+    },
+
+    /* ---------- partita ---------- */
+
+    touchStart() {
+      this.touchSeen = true;
+      this.held = false;
+    },
+
+    tapNoi() {
+      this.tap(NOI);
+    },
+
+    tapLoro() {
+      this.tap(LORO);
+    },
+
+    holdNoi() {
+      this.hold(NOI);
+    },
+
+    holdLoro() {
+      this.hold(LORO);
+    },
+
+    tap(team) {
+      const now = Date.now();
+      // Il rilascio dopo una pressione lunga non deve contare come punto.
+      // Se touchstart non arriva mai, ci si affida a una finestra di 3 s.
+      if (this.held && (this.touchSeen || now - this.heldAt < 3000)) return;
+      if (now - this.tapAt < 250) return;
+      this.tapAt = now;
+      const before = compute(this.match);
+      const m = addPoint(this.match, team);
+      if (m === this.match) return; // partita finita
+      const s = this.setMatch(m);
+      if (s.winner >= 0) this.celebrate('match', team, s);
+      else if (s.sets.length > before.sets.length) this.celebrate('set', team, s);
+      else if (s.gamesPlayed > before.gamesPlayed) this.celebrate('game', team, s);
+      else {
+        this.animate(team, 'pop');
+        this.buzz('short');
+      }
+    },
+
+    hold(team) {
+      const now = Date.now();
+      if (now - this.heldAt < 800) return;
+      this.held = true;
+      this.heldAt = now;
+      const m = undoPoint(this.match, team);
+      if (m === this.match) return; // niente da annullare
+      this.setMatch(m);
+      this.animate(team, 'shake');
+      this.buzz('long');
+    },
+
+    setMatch(m) {
+      this.match = m;
+      const s = this.refreshMatch();
+      this.save();
+      return s;
+    },
+
+    /* Animazioni brevi, solo a ogni tocco (niente animazioni continue: con lo schermo
+       sempre acceso consumerebbero batteria). Un'animazione riparte quando cambia il
+       suo nome, quindi ogni effetto esiste in due copie identiche (-a / -b) che si
+       alternano. Punto: il numero si ingrandisce e il pannello si illumina;
+       annulla (pressione lunga): il numero oscilla. */
+    animate(team, kind) {
+      const v = this.flip(kind + team);
+      const pts = 'points ' + kind + v;
+      if (team === NOI) this.ptsNoiCls = pts;
+      else this.ptsLoroCls = pts;
+      if (kind !== 'pop') return;
+      const panel = PANEL_CLS[team] + GLOW_CLS[team] + this.flip('glow' + team);
+      if (team === NOI) this.panelNoiCls = panel;
+      else this.panelLoroCls = panel;
+    },
+
+    flip(key) {
+      this.flips[key] = !this.flips[key];
+      return this.flips[key] ? '-a' : '-b';
+    },
+
+    // Senza animazioni in sospeso: tornando sulla partita (dopo GAME/SET o la
+    // conferma) i pannelli non devono ripetere l'ultimo effetto.
+    resetAnim() {
+      this.ptsNoiCls = 'points';
+      this.ptsLoroCls = 'points';
+      this.panelNoiCls = PANEL_CLS[NOI];
+      this.panelLoroCls = PANEL_CLS[LORO];
+    },
+
+    celebrate(kind, team, s) {
+      const last = s.sets[s.sets.length - 1];
+      if (kind === 'match') {
+        this.flashTitle = team === NOI ? this.L.victory : this.L.defeat;
+        this.flashSub = setsLine(s.sets);
+      } else if (kind === 'set') {
+        this.flashTitle = this.L.set;
+        this.flashSub = (team === NOI ? this.L.us : this.L.them) + '  ' + Math.max(last[0], last[1]) + '-' + Math.min(last[0], last[1]);
+      } else {
+        this.flashTitle = this.L.game;
+        this.flashSub = team === NOI ? this.L.us : this.L.them;
+      }
+      this.flashTeam = team;
+      // da 6 lettere in su (VITTORIA, SCONFITTA, VICTORY…) il testo grande non ci sta
+      this.flashTitleCls =
+        'flash-title ' + (kind === 'match' ? 'bounce-in' : 'zoom-in') + (this.flashTitle.length > 5 ? ' flash-title-long' : '');
+      this.resetAnim();
+      this.view = 'flash';
+      this.buzz('long');
+      if (kind !== 'game') setTimeout(() => this.buzz('long'), 450);
+      clearTimeout(this.flashTimer);
+      this.flashTimer = setTimeout(() => this.closeFlash(), kind === 'game' ? 1600 : kind === 'set' ? 2800 : 4000);
+    },
+
+    closeFlash() {
+      clearTimeout(this.flashTimer);
+      if (this.view === 'flash') this.view = 'match';
+    },
+
+    askEnd() {
+      if (compute(this.match).winner >= 0) {
+        this.finish();
+        return;
+      }
+      const empty = !this.match.points;
+      this.confirmTitle = empty ? this.L.discardTitle : this.L.endTitle;
+      this.confirmSub = empty ? this.L.discardSub : this.L.endSub;
+      this.confirmYesCls = empty ? 'btn btn-confirm btn-danger' : 'btn btn-confirm btn-ok';
+      this.resetAnim();
+      this.view = 'confirm';
+    },
+
+    cancelEnd() {
+      this.view = 'match';
+    },
+
+    confirmEnd() {
+      this.finish();
+    },
+
+    // Chiude la partita: se c'è almeno un punto va nello storico e se ne mostra il riepilogo.
+    finish() {
+      const m = this.match;
+      this.match = null;
+      this.save();
+      if (!m || !m.points) {
+        this.toHome();
+        return;
+      }
+      this.view = ''; // niente tocchi su una partita che non c'è più mentre si legge lo storico
+      this.keepScreen(false);
+      this.withHistory(() => {
+        this.history = addToHistory(this.history, m, Date.now());
+        this.saveHistory();
+        this.showDetail(0, 'home');
+      });
+    },
+
+    /* ---------- storico ---------- */
+
+    openHistory() {
+      this.withHistory(() => {
+        this.historyItems = this.history.map((m) => {
+          const s = compute(m);
+          const r = this.result(s);
+          return {
+            sport: this.L[m.sport],
+            date: formatDate(m.start || m.end, this.lang),
+            score: setsLine(scoreSets(s)) || '0-0',
+            res: r.text,
+            resCls: 'h-res ' + r.cls,
+            dur: formatDuration(m.start && m.end ? m.end - m.start : 0)
+          };
+        });
+        this.historyEmpty = this.history.length === 0;
+        this.view = 'history';
+        this.applyScreen();
+      });
+    },
+
+    openDetail(idx) {
+      this.showDetail(idx, 'history');
+    },
+
+    showDetail(idx, from) {
+      const m = this.history[idx];
+      if (!m) {
+        this.toHome();
+        return;
+      }
+      const s = compute(m);
+      const r = this.result(s);
+      const when = formatDate(m.start || m.end, this.lang);
+      this.detailIdx = idx;
+      this.detailFrom = from;
+      this.deleteArmed = false;
+      this.detailHead = this.L[m.sport] + (when ? ' · ' + when : '');
+      this.detailRes = r.text;
+      this.detailResCls = 'res-big ' + r.cls;
+      this.detailSets = scoreSets(s).map((x, i) => ({ label: fill(this.L.nthSet, { n: i + 1 }), a: String(x[0]), b: String(x[1]) }));
+      this.detailDur = formatDuration(m.start && m.end ? m.end - m.start : 0);
+      this.detailStats = [
+        { label: this.L.points, a: String(s.pointsWon[0]), b: String(s.pointsWon[1]) },
+        { label: this.L.games, a: String(s.gamesWon[0]), b: String(s.gamesWon[1]) },
+        { label: this.L.breaks, a: String(s.breaks[0]), b: String(s.breaks[1]) }
+      ];
+      this.deleteLabel = this.L.del;
+      this.deleteTextCls = 'btn-sec-text';
+      this.view = 'detail';
+      this.applyScreen();
+    },
+
+    result(s) {
+      if (s.winner === NOI) return { text: this.L.win, cls: 'res-win' };
+      if (s.winner === LORO) return { text: this.L.loss, cls: 'res-loss' };
+      return { text: this.L.stopped, cls: 'res-stop' };
+    },
+
+    closeDetail() {
+      if (this.detailFrom === 'history') this.openHistory();
+      else this.toHome();
+    },
+
+    // Doppio tocco per eliminare: il primo chiede conferma
+    deleteDetail() {
+      if (!this.deleteArmed) {
+        this.deleteArmed = true;
+        this.deleteLabel = this.L.delConfirm;
+        this.deleteTextCls = 'btn-sec-text text-danger';
+        return;
+      }
+      const i = this.detailIdx;
+      this.history = this.history.slice(0, i).concat(this.history.slice(i + 1));
+      this.saveHistory();
+      this.buzz('short');
+      this.closeDetail();
+    }
+  };
+</script>
+
+<style>
+  /* Base = bracciale (Band 9: 192×490, Band 10: 212×520). Sfondo nero (AMOLED:
+     pixel neri = spenti), solo selettori di classe. Gli angoli dello schermo sono
+     molto arrotondati (si conta un raggio di ~90px): 40px di margine in alto, 24 in
+     basso, e quello che sta agli estremi (pulsante Termina) è più stretto e centrato. */
+  .page {
+    width: 212px;
+    height: 520px;
+    flex-direction: column;
+    background-color: #000000;
+  }
+
+  .screen {
+    width: 212px;
+    height: 520px;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 8px 24px 8px;
+  }
+
+  .screen-center {
+    justify-content: center;
+  }
+
+  .scroller {
+    width: 212px;
+    height: 520px;
+    flex-direction: column;
+  }
+
+  .col {
+    width: 212px;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 8px 48px 8px;
+  }
+
+  .text-noi {
+    color: #0a84ff;
+  }
+
+  .text-loro {
+    color: #ff9f0a;
+  }
+
+  .text-danger {
+    color: #ff453a;
+  }
+
+  /* ---- home e scelte: domanda in alto, due schede con immagine ---- */
+
+  .step-title {
+    font-size: 20px;
+    font-weight: bold;
+    color: #ffffff;
+    text-align: center;
+  }
+
+  .step-title-app {
+    font-size: 24px;
+    color: #dfff4f;
+  }
+
+  .steps {
+    margin-top: 8px;
+    flex-direction: row;
+    justify-content: center;
+  }
+
+  .step {
+    width: 8px;
+    height: 8px;
+    margin-left: 4px;
+    margin-right: 4px;
+    border-radius: 4px;
+    background-color: #3a3a3c;
+  }
+
+  .step-on {
+    background-color: #dfff4f;
+  }
+
+  .choices {
+    margin-top: 14px;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .choice {
+    width: 196px;
+    height: 190px;
+    border-radius: 28px;
+    background-color: #1c1c1e;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .choice-gap {
+    margin-top: 10px;
+  }
+
+  .choice-noi {
+    background-color: #0a84ff;
+  }
+
+  .choice-loro {
+    background-color: #e67e00;
+  }
+
+  .choice-img {
+    width: 96px;
+    height: 96px;
+  }
+
+  .choice-label {
+    margin-top: 8px;
+    font-size: 26px;
+    font-weight: bold;
+    color: #ffffff;
+  }
+
+  .choice-sub {
+    margin-top: 2px;
+    font-size: 13px;
+    color: #aaaaaa;
+  }
+
+  .choice-num {
+    font-size: 84px;
+    font-weight: bold;
+    color: #dfff4f;
+  }
+
+  .version {
+    margin-top: 14px;
+    font-size: 12px;
+    color: #636366;
+    text-align: center;
+  }
+
+  .btn {
+    width: 196px;
+    height: 72px;
+    border-radius: 20px;
+    justify-content: center;
+    align-items: center;
+    margin-top: 10px;
+  }
+
+  .btn-ok {
+    background-color: #30d158;
+  }
+
+  .btn-danger {
+    background-color: #ff453a;
+  }
+
+  .btn-grey {
+    background-color: #2c2c2e;
+  }
+
+  .btn-text {
+    font-size: 28px;
+    font-weight: bold;
+    color: #000000;
+  }
+
+  .btn-text-light {
+    color: #ffffff;
+  }
+
+  .btn-sec {
+    width: 196px;
+    height: 44px;
+    margin-top: 10px;
+    border-radius: 22px;
+    background-color: #1c1c1e;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .btn-sec-text {
+    font-size: 16px;
+    color: #aaaaaa;
+  }
+
+  /* ---- partita ---- */
+
+  .sets {
+    width: 196px;
+    height: 20px;
+    font-size: 15px;
+    color: #8e8e93;
+    text-align: center;
+  }
+
+  /* riga unica in alto, solo sugli schermi rotondi */
+  .top {
+    display: none;
+  }
+
+  .games-row {
+    height: 40px;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .games {
+    font-size: 32px;
+    font-weight: bold;
+  }
+
+  .games-sep {
+    font-size: 26px;
+    color: #636366;
+    margin-left: 12px;
+    margin-right: 12px;
+  }
+
+  .status {
+    width: 196px;
+    height: 22px;
+    font-size: 16px;
+    font-weight: bold;
+    color: #dfff4f;
+    text-align: center;
+  }
+
+  .panels {
+    width: 196px;
+    flex-grow: 1;
+    flex-direction: column;
+    margin-top: 4px;
+  }
+
+  .panel {
+    flex-grow: 1;
+    padding: 6px 14px;
+    border-radius: 22px;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .panel-noi {
+    background-color: #0a2240;
+  }
+
+  .panel-loro {
+    background-color: #3a2408;
+  }
+
+  .panel-gap {
+    margin-top: 8px;
+  }
+
+  .panel-head {
+    width: 168px;
+    height: 30px;
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 7px;
+    margin-right: 8px;
+  }
+
+  .team {
+    flex-grow: 1;
+    font-size: 22px;
+    font-weight: bold;
+  }
+
+  /* nomi corti solo sui pannelli stretti (es. "NOS." al posto di "NOSOTROS") */
+  .team-short {
+    display: none;
+  }
+
+  .side {
+    margin-left: 4px;
+    font-size: 15px;
+    font-weight: bold;
+    color: #dfff4f;
+  }
+
+  .points {
+    width: 168px;
+    height: 110px;
+    line-height: 110px;
+    font-size: 96px;
+    font-weight: bold;
+    color: #ffffff;
+    text-align: center;
+  }
+
+  .bar {
+    width: 168px;
+    height: 44px;
+    margin-top: 8px;
+    flex-direction: row;
+    justify-content: center;
+  }
+
+  .btn-end {
+    width: 150px;
+    height: 44px;
+    border-radius: 22px;
+    background-color: #1c1c1e;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .btn-end-text {
+    font-size: 16px;
+    color: #aaaaaa;
+  }
+
+  /* ---- GAME / SET a tutto schermo ---- */
+
+  /* niente classe .screen: le sue varianti per rotondi e rettangolari cambierebbero i margini */
+  .flash-screen {
+    width: 212px;
+    height: 520px;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px 8px 20px 8px;
+  }
+
+  /* angoli molto arrotondati per stare dentro le stondature dello schermo */
+  .flash-card {
+    width: 196px;
+    height: 480px;
+    border-radius: 60px;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .flash-card-noi {
+    background-color: #0a84ff;
+  }
+
+  /* arancione un po' più scuro di quello dei testi, perché sopra c'è testo bianco */
+  .flash-card-loro {
+    background-color: #e67e00;
+  }
+
+  .flash-title {
+    font-size: 48px;
+    font-weight: bold;
+    color: #ffffff;
+    text-align: center;
+  }
+
+  .flash-title-long {
+    font-size: 30px;
+  }
+
+  .flash-sub {
+    margin-top: 6px;
+    font-size: 22px;
+    font-weight: bold;
+    color: #ffffff;
+    text-align: center;
+  }
+
+  /* ---- conferma ---- */
+
+  .confirm-title {
+    font-size: 24px;
+    font-weight: bold;
+    color: #ffffff;
+    text-align: center;
+  }
+
+  .confirm-sub {
+    margin-top: 8px;
+    font-size: 15px;
+    color: #aaaaaa;
+    text-align: center;
+  }
+
+  .confirm-btns {
+    margin-top: 14px;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  /* ---- storico ---- */
+
+  .title {
+    font-size: 22px;
+    font-weight: bold;
+    color: #dfff4f;
+    text-align: center;
+  }
+
+  .empty {
+    margin-top: 30px;
+    margin-bottom: 20px;
+    font-size: 15px;
+    color: #8e8e93;
+    text-align: center;
+  }
+
+  .h-item {
+    width: 196px;
+    margin-top: 8px;
+    padding: 10px 12px;
+    border-radius: 18px;
+    background-color: #1c1c1e;
+    flex-direction: column;
+  }
+
+  .h-line {
+    width: 172px;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .h-sport {
+    font-size: 12px;
+    font-weight: bold;
+    color: #dfff4f;
+  }
+
+  .h-date {
+    font-size: 12px;
+    color: #8e8e93;
+  }
+
+  .h-score {
+    margin-top: 4px;
+    margin-bottom: 2px;
+    font-size: 22px;
+    font-weight: bold;
+    color: #ffffff;
+  }
+
+  .h-res {
+    font-size: 13px;
+    font-weight: bold;
+  }
+
+  .h-dur {
+    font-size: 13px;
+    color: #8e8e93;
+  }
+
+  .res-win {
+    color: #30d158;
+  }
+
+  .res-loss {
+    color: #ff453a;
+  }
+
+  .res-stop {
+    color: #8e8e93;
+  }
+
+  /* ---- riepilogo ---- */
+
+  .d-head {
+    width: 196px;
+    font-size: 13px;
+    color: #8e8e93;
+    text-align: center;
+  }
+
+  .res-big {
+    margin-top: 4px;
+    margin-bottom: 6px;
+    font-size: 28px;
+    font-weight: bold;
+    text-align: center;
+  }
+
+  .d-row {
+    width: 196px;
+    height: 34px;
+    padding: 0px 8px;
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .d-label {
+    flex-grow: 1;
+    font-size: 15px;
+    color: #aaaaaa;
+  }
+
+  .d-team {
+    width: 50px;
+    font-size: 12px;
+    font-weight: bold;
+    text-align: center;
+  }
+
+  .d-num {
+    width: 50px;
+    font-size: 26px;
+    font-weight: bold;
+    text-align: center;
+  }
+
+  .d-sep {
+    width: 14px;
+    font-size: 20px;
+    color: #636366;
+    text-align: center;
+  }
+
+  .card {
+    width: 196px;
+    margin-top: 10px;
+    padding: 6px 14px;
+    border-radius: 18px;
+    background-color: #1c1c1e;
+    flex-direction: column;
+  }
+
+  .stat {
+    height: 32px;
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .stat-label {
+    flex-grow: 1;
+    font-size: 15px;
+    color: #aaaaaa;
+  }
+
+  .stat-value {
+    font-size: 17px;
+    font-weight: bold;
+    color: #ffffff;
+  }
+
+  .stat-num {
+    width: 40px;
+    font-size: 17px;
+    font-weight: bold;
+    text-align: right;
+  }
+
+  /* ---- animazioni (vedi animate() nello script) ---- */
+
+  .pop-a {
+    animation-name: popA;
+    animation-duration: 450ms;
+    animation-timing-function: ease-out;
+  }
+
+  .pop-b {
+    animation-name: popB;
+    animation-duration: 450ms;
+    animation-timing-function: ease-out;
+  }
+
+  .shake-a {
+    animation-name: shakeA;
+    animation-duration: 550ms;
+    animation-timing-function: linear;
+  }
+
+  .shake-b {
+    animation-name: shakeB;
+    animation-duration: 550ms;
+    animation-timing-function: linear;
+  }
+
+  .glow-noi-a {
+    animation-name: glowNoiA;
+    animation-duration: 900ms;
+    animation-timing-function: ease-out;
+  }
+
+  .glow-noi-b {
+    animation-name: glowNoiB;
+    animation-duration: 900ms;
+    animation-timing-function: ease-out;
+  }
+
+  .glow-loro-a {
+    animation-name: glowLoroA;
+    animation-duration: 900ms;
+    animation-timing-function: ease-out;
+  }
+
+  .glow-loro-b {
+    animation-name: glowLoroB;
+    animation-duration: 900ms;
+    animation-timing-function: ease-out;
+  }
+
+  .zoom-in {
+    animation-name: zoomIn;
+    animation-duration: 550ms;
+    animation-timing-function: ease-out;
+  }
+
+  .bounce-in {
+    animation-name: bounceIn;
+    animation-duration: 1000ms;
+    animation-timing-function: ease-out;
+  }
+
+  .slide-in {
+    animation-name: slideIn;
+    animation-duration: 450ms;
+    animation-timing-function: ease-out;
+  }
+
+  /* Vela vuole sempre 0% e 100% espliciti */
+  @keyframes popA {
+    0% {
+      transform: scale(1);
+    }
+    35% {
+      transform: scale(1.4);
+    }
+    100% {
+      transform: scale(1);
+    }
+  }
+
+  @keyframes popB {
+    0% {
+      transform: scale(1);
+    }
+    35% {
+      transform: scale(1.4);
+    }
+    100% {
+      transform: scale(1);
+    }
+  }
+
+  @keyframes shakeA {
+    0% {
+      transform: translateX(0px);
+    }
+    20% {
+      transform: translateX(-14px);
+    }
+    40% {
+      transform: translateX(12px);
+    }
+    60% {
+      transform: translateX(-8px);
+    }
+    80% {
+      transform: translateX(4px);
+    }
+    100% {
+      transform: translateX(0px);
+    }
+  }
+
+  @keyframes shakeB {
+    0% {
+      transform: translateX(0px);
+    }
+    20% {
+      transform: translateX(-14px);
+    }
+    40% {
+      transform: translateX(12px);
+    }
+    60% {
+      transform: translateX(-8px);
+    }
+    80% {
+      transform: translateX(4px);
+    }
+    100% {
+      transform: translateX(0px);
+    }
+  }
+
+  @keyframes glowNoiA {
+    0% {
+      background-color: #1f6fd1;
+    }
+    35% {
+      background-color: #1f6fd1;
+    }
+    100% {
+      background-color: #0a2240;
+    }
+  }
+
+  @keyframes glowNoiB {
+    0% {
+      background-color: #1f6fd1;
+    }
+    35% {
+      background-color: #1f6fd1;
+    }
+    100% {
+      background-color: #0a2240;
+    }
+  }
+
+  @keyframes glowLoroA {
+    0% {
+      background-color: #a66510;
+    }
+    35% {
+      background-color: #a66510;
+    }
+    100% {
+      background-color: #3a2408;
+    }
+  }
+
+  @keyframes glowLoroB {
+    0% {
+      background-color: #a66510;
+    }
+    35% {
+      background-color: #a66510;
+    }
+    100% {
+      background-color: #3a2408;
+    }
+  }
+
+  @keyframes zoomIn {
+    0% {
+      transform: scale(0.4);
+    }
+    70% {
+      transform: scale(1.08);
+    }
+    100% {
+      transform: scale(1);
+    }
+  }
+
+  @keyframes bounceIn {
+    0% {
+      transform: scale(0.3);
+    }
+    45% {
+      transform: scale(1.15);
+    }
+    65% {
+      transform: scale(0.94);
+    }
+    82% {
+      transform: scale(1.04);
+    }
+    100% {
+      transform: scale(1);
+    }
+  }
+
+  @keyframes slideIn {
+    0% {
+      opacity: 0;
+      transform: translateX(70px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateX(0px);
+    }
+  }
+
+  /* ---- schermi rettangolari (Band 8/9 Pro, Redmi Watch) e rotondi (Watch S):
+     in px di progetto sono larghi 212 e alti 210-300, quindi pannelli affiancati
+     e tutto più compatto ---- */
+
+  @media (shape: rect), (shape: circle) {
+    .screen {
+      padding: 12px 8px 10px 8px;
+    }
+
+    .step-title {
+      font-size: 16px;
+    }
+
+    .step-title-app {
+      font-size: 18px;
+    }
+
+    .steps {
+      margin-top: 6px;
+    }
+
+    .choices {
+      margin-top: 10px;
+      flex-direction: row;
+    }
+
+    .choice {
+      width: 96px;
+      height: 150px;
+      border-radius: 22px;
+    }
+
+    .choice-gap {
+      margin-top: 0px;
+      margin-left: 8px;
+    }
+
+    .choice-img {
+      width: 64px;
+      height: 64px;
+    }
+
+    .choice-label {
+      font-size: 18px;
+    }
+
+    .choice-sub {
+      font-size: 10px;
+    }
+
+    .choice-num {
+      font-size: 56px;
+    }
+
+    .team-long {
+      display: none;
+    }
+
+    .team-short {
+      display: flex;
+    }
+
+    .version {
+      margin-top: 8px;
+    }
+
+    .col {
+      padding: 14px 8px 24px 8px;
+    }
+
+    .btn {
+      height: 50px;
+      border-radius: 16px;
+    }
+
+    .btn-text {
+      font-size: 22px;
+    }
+
+    .btn-sec {
+      height: 36px;
+      border-radius: 18px;
+    }
+
+    .btn-sec-text {
+      font-size: 14px;
+    }
+
+    .sets {
+      height: 16px;
+      font-size: 12px;
+    }
+
+    .games-row {
+      height: 28px;
+    }
+
+    .games {
+      font-size: 24px;
+    }
+
+    .games-sep {
+      font-size: 20px;
+      margin-left: 8px;
+      margin-right: 8px;
+    }
+
+    .status {
+      height: 16px;
+      font-size: 12px;
+    }
+
+    .panels {
+      flex-direction: row;
+      margin-top: 2px;
+    }
+
+    .panel {
+      padding: 6px 6px;
+      border-radius: 16px;
+    }
+
+    .panel-gap {
+      margin-top: 0px;
+      margin-left: 6px;
+    }
+
+    .panel-head {
+      width: 82px;
+      height: 22px;
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 5px;
+      margin-right: 5px;
+    }
+
+    .team {
+      font-size: 16px;
+    }
+
+    .side {
+      font-size: 12px;
+    }
+
+    .points {
+      width: 82px;
+      height: 64px;
+      line-height: 64px;
+      font-size: 52px;
+    }
+
+    .bar {
+      width: 196px;
+      height: 32px;
+      margin-top: 6px;
+    }
+
+    .btn-end {
+      width: 160px;
+      height: 32px;
+      border-radius: 16px;
+    }
+
+    .btn-end-text {
+      font-size: 14px;
+    }
+
+    .flash-card {
+      border-radius: 36px;
+    }
+
+    .flash-title {
+      font-size: 40px;
+    }
+
+    .flash-title-long {
+      font-size: 26px;
+    }
+
+    .flash-sub {
+      font-size: 18px;
+    }
+
+    .confirm-title {
+      font-size: 18px;
+    }
+
+    .confirm-sub {
+      font-size: 13px;
+    }
+
+    .confirm-btns {
+      flex-direction: row;
+    }
+
+    .btn-confirm {
+      width: 90px;
+    }
+
+    .btn-no {
+      margin-left: 8px;
+    }
+
+    .title {
+      font-size: 18px;
+    }
+
+    .h-item {
+      padding: 8px 12px;
+      border-radius: 16px;
+    }
+
+    .h-score {
+      font-size: 18px;
+    }
+
+    .res-big {
+      font-size: 22px;
+    }
+
+    .d-row {
+      height: 28px;
+    }
+
+    .d-num {
+      font-size: 20px;
+    }
+
+    .stat {
+      height: 26px;
+    }
+
+    .stat-label {
+      font-size: 13px;
+    }
+
+    .stat-value {
+      font-size: 14px;
+    }
+
+    .stat-num {
+      font-size: 14px;
+    }
+  }
+
+  /* ---- solo rotondi: tutto dentro il cerchio ---- */
+
+  @media (shape: circle) {
+    .screen {
+      padding: 22px 14px 14px 14px;
+    }
+
+    .step-title {
+      font-size: 14px;
+    }
+
+    .step-title-app {
+      font-size: 15px;
+    }
+
+    .choice {
+      width: 82px;
+      height: 104px;
+    }
+
+    .choice-img {
+      width: 50px;
+      height: 50px;
+    }
+
+    .choice-label {
+      margin-top: 4px;
+      font-size: 15px;
+    }
+
+    .choice-sub {
+      display: none;
+    }
+
+    .choice-num {
+      font-size: 44px;
+    }
+
+    .col {
+      padding: 34px 22px 44px 22px;
+    }
+
+    .sets {
+      display: none;
+    }
+
+    .status {
+      display: none;
+    }
+
+    .top {
+      display: flex;
+      width: 124px;
+      height: 16px;
+      font-size: 12px;
+      color: #8e8e93;
+      text-align: center;
+    }
+
+    .top-status {
+      font-weight: bold;
+      color: #dfff4f;
+    }
+
+    .panels {
+      width: 184px;
+    }
+
+    /* cerchio: largo quanto alto (212 - 2 × 20) */
+    .flash-card {
+      width: 172px;
+      border-radius: 86px;
+    }
+
+    .flash-title-long {
+      font-size: 22px;
+    }
+
+    .panel {
+      padding: 6px 4px;
+    }
+
+    .panel-head {
+      width: 80px;
+      height: 20px;
+    }
+
+    .team {
+      font-size: 15px;
+    }
+
+    .side {
+      font-size: 11px;
+    }
+
+    .points {
+      width: 80px;
+      height: 56px;
+      line-height: 56px;
+      font-size: 46px;
+    }
+
+    .bar {
+      width: 124px;
+      height: 30px;
+    }
+
+    .btn-end {
+      width: 100px;
+      height: 30px;
+      border-radius: 15px;
+    }
+
+    .btn-end-text {
+      font-size: 13px;
+    }
+
+    .btn {
+      width: 168px;
+    }
+
+    .btn-sec {
+      width: 168px;
+    }
+
+    .btn-confirm {
+      width: 80px;
+    }
+
+    .h-item {
+      width: 168px;
+    }
+
+    .h-line {
+      width: 144px;
+    }
+
+    .d-head {
+      width: 168px;
+    }
+
+    .d-row {
+      width: 168px;
+    }
+
+    .card {
+      width: 168px;
+    }
+  }
+</style>
